@@ -46,7 +46,7 @@ namespace WaterMeterReader
         private const double SwitchFlowOffThreshold = 6.0;
         private const double SwitchFlowOnThreshold = 10.0;
 
-        private int _startupSamplesLeft = StartupSamples;
+        private uint _startupSamplesLeft = StartupSamples;
 
         public double Amplitude { get; set; }
         public bool CalculatedFlow { get; set; }
@@ -151,7 +151,7 @@ namespace WaterMeterReader
             _startupSamplesLeft = StartupSamples;
         }
 
-        public void ResetAnomalies()
+        private void ResetAnomalies()
         {
             CalculatedFlow = false;
             Drift = false;

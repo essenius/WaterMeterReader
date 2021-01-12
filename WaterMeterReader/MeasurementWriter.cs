@@ -13,19 +13,18 @@ using System.IO;
 
 namespace WaterMeterReader
 {
-    internal class MeasurementWriter
+    internal class MeasurementWriter : BatchWriter
     {
-        public const int DefaultFlushRate = 10; // no more than 12 due to serial speed limitations
+        private const int DefaultFlushRate = 10; // no more than 12 due to serial speed limitations
 
-        private readonly StreamWriter _writer;
+        //private readonly StreamWriter _writer;
         private string _measureList;
-        private int _measureLogCount;
+        private uint _measureLogCount;
         private uint _desiredFlushRate;
 
-        public MeasurementWriter(StreamWriter writer)
+        public MeasurementWriter(StreamWriter writer) : base(writer)
         {
-            _writer = writer;
-            DesiredFlushRate = DefaultFlushRate;
+            _desiredFlushRate = DefaultFlushRate;
             FlushRate = DefaultFlushRate;
             Reset();
         }
@@ -45,15 +44,19 @@ namespace WaterMeterReader
             }
         }
 
-        public uint FlushRate { get; private set; }
-
-        private static string Param(object paramValue) => "," + paramValue;
 
         private void Reset()
         {
             _measureList = "M";
             _measureLogCount = 0;
             FlushRate = DesiredFlushRate;
+        }
+
+        public void AddMeasurement(Measurement measurement)
+        {
+            _measureLogCount++;
+            _measureList += Param(measurement.Value);
+            _measureList += Param(measurement.Delay);
         }
 
         // We print the measure log every nth time, n being the flush rate. This puts less strain on the receiving end.
@@ -64,9 +67,7 @@ namespace WaterMeterReader
             {
                 return false;
             }
-            _measureLogCount++;
-            _measureList += Param(measurement.Value);
-            _measureList += Param(measurement.Delay);
+            AddMeasurement(measurement);
             if (_measureLogCount % FlushRate != 0)
             {
                 return false;
@@ -75,7 +76,13 @@ namespace WaterMeterReader
             return true;
         }
 
-        public void WriteHeader()
+        public override void Write()
+        {
+            _measureList += Param(Crc(_measureList));
+            Writer.WriteLine(_measureList);
+        }
+
+        public override void WriteHeader()
         {
             var header = "M";
             for (var i = 0; i < FlushRate; i++)
@@ -83,13 +90,12 @@ namespace WaterMeterReader
                 header += $",M{i},W{i}";
             }
             header += ",CRC";
-            _writer.WriteLine(header);
+            Writer.WriteLine(header);
         }
 
-        public void Flush()
+        public override void Flush()
         {
-            _measureList += Param(Crc.Get(_measureList));
-            _writer.WriteLine(_measureList);
+            Write();
             Reset();
         }
     }

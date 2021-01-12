@@ -13,11 +13,10 @@ using System.IO;
 
 namespace WaterMeterReader
 {
-    internal class SummaryWriter
+    internal class SummaryWriter : BatchWriter
     {
         private const uint FlushRateIfIdle = 1;
         private const uint FlushRateIfInteresting = 1;
-        private readonly StreamWriter _writer;
         private uint _driftCount;
         private uint _excludeCount;
 
@@ -32,15 +31,12 @@ namespace WaterMeterReader
         private string _summary;
         private uint _summaryCount;
 
-        public SummaryWriter(StreamWriter writer)
+        public SummaryWriter(StreamWriter writer) : base(writer)
         {
-            _writer = writer;
             IdleFlushRate = FlushRateIfIdle;
             NonIdleFlushRate = FlushRateIfInteresting;
             Reset();
         }
-
-        public uint FlushRate { get; private set; }
 
         public uint IdleFlushRate { get; set; }
         public uint NonIdleFlushRate { get; set; }
@@ -80,14 +76,13 @@ namespace WaterMeterReader
             }
         }
 
-        public void Flush()
+        public override void Flush()
         {
             Write();
             PrepareWrite(true);
             Write();
         }
 
-        private static string Param(object paramValue) => "," + paramValue;
 
         public void PrepareWrite(bool endOfFile = false)
         {
@@ -130,7 +125,7 @@ namespace WaterMeterReader
             _summary += Param(_driftCount);
             _summary += Param(_excludeCount);
             _summary += Param(averageDelay);
-            _summary += Param(Crc.Get(_summary));
+            _summary += Param(Crc(_summary));
 
             _summaryCount = 0;
             // As we can't go faster than 115200 baud, we need to limit the amount of data sent each mesurement. Hence the csv format.
@@ -149,19 +144,19 @@ namespace WaterMeterReader
             _sumDelay = 0;
         }
 
-        public void Write()
+        public override void Write()
         {
             if (string.IsNullOrEmpty(_summary))
             {
                 return;
             }
-            _writer.WriteLine(_summary);
+            Writer.WriteLine(_summary);
             _summary = string.Empty;
         }
 
-        public void WriteHeader()
+        public override void WriteHeader()
         {
-            _writer.WriteLine("S,Measure,Flows,SumAmplitude,SumLPonHP,LowPassFast,LowPassSlow,LPonHP,Outliers,Drifts,Excludes,AvgDelay,CRC");
+            Writer.WriteLine("S,Measure,Flows,SumAmplitude,SumLPonHP,LowPassFast,LowPassSlow,LPonHP,Outliers,Drifts,Excludes,AvgDelay,CRC");
         }
     }
 }

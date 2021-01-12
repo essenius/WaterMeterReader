@@ -1,4 +1,4 @@
-// Copyright 2021 Rik Essenius
+﻿// Copyright 2021 Rik Essenius
 // 
 //   Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 //   except in compliance with the License. You may obtain a copy of the License at
@@ -14,13 +14,13 @@ using WaterMeterReader;
 
 namespace WaterMeterReaderTest
 {
-    [TestClass]
-    public class CrcTest
+    internal class BatchWriterTest
     {
         [TestMethod]
-        public void CrcTest1()
+        public void BatchWriterCrcTest()
         {
-            Assert.AreEqual(19164, Crc.Get("M,2508,0,2510,8568,2517,8016,2522,8360,2515,8368,2517,8388,2529,8364,2534,8356,2520,8368,2536,8388"));
+            Assert.AreEqual(19164,
+                BatchWriter.Crc("M,2508,0,2510,8568,2517,8016,2522,8360,2515,8368,2517,8388,2529,8364,2534,8356,2520,8368,2536,8388"));
         }
     }
 }

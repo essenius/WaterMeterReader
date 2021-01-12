@@ -11,6 +11,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -51,15 +52,21 @@ namespace WaterMeterReader
         private void ReadLine()
         {
             var line = _reader.ReadLine();
-            if (line.EndsWith(",1"))
-            {
-                line = line[..^2];
-            }
+            //if (line.EndsWith(",1") || line.EndsWith(",0"))
+            //{
+            //    line = line[..^2];
+            //}
             var entries = line.Split(',').ToList();
-            var crc = Convert.ToInt32(entries.Last());
+            // skip header rows etc.
+            if (!int.TryParse(entries.Last(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var crc))
+            {
+                ReadLine();
+                return;
+            }
+            //var crc = Convert.ToInt32(entries.Last());
             var crcTarget = line[line.IndexOf('M')..];
             crcTarget = crcTarget.Remove(crcTarget.LastIndexOf(','));
-            var crcCalculated = Crc.Get(crcTarget);
+            var crcCalculated = BatchWriter.Crc(crcTarget);
             CrcOk &= crcCalculated == crc;
             _timestamp = DateTime.Parse(entries[0]);
 

@@ -20,7 +20,7 @@ namespace WaterMeterReader
     {
         public static void Main()
         {
-            const string inFile = @"error.txt";
+            const string inFile = @"C:\Users\Rik.Essenius\source\spikes\PeakDetector\PeakDetector\0801-2-meas.txt";
             using var reader = new StreamReader(inFile);
             var measureOutFile = Path.GetFileNameWithoutExtension(inFile);
             var summaryOutfile = measureOutFile + "_s.csv";
